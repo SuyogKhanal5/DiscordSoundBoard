@@ -1,8 +1,19 @@
 import discord
 from discord.ext import commands
+import youtube_dl
+import os
 
 client = commands.Bot(command_prefix = '%')
 token = 'TOKEN'
+
+ydl_opts = { # Dictionary Containing settings for YT_DL
+        'format': 'bestaudio/best',
+        'postprocessors': [{
+            'key': 'FFmpegExtractAudio',
+            'preferredcodec': 'mp3',
+            'preferredquality': '192',
+        }],
+    }
 
 @client.event
 async def on_ready():
@@ -78,6 +89,28 @@ async def dababy(ctx):
 async def dweeb(ctx):
     voice = discord.utils.get(client.voice_clients, guild = ctx.guild)
 
-    voice.play(discord.FFmpegPCMAudio('dweeb.mp3'))     
+    voice.play(discord.FFmpegPCMAudio('dweeb.mp3'))
+    
+@client.command()
+async def save_slot(ctx, *, url): 
+    song_there = os.path.isfile("song.mp3")
+    
+    if song_there == True:
+        os.remove("song.mp3")
+
+    voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
+
+    with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+        ydl.download([url])
+
+    for file in os.listdir("./"):
+        if file.endswith(".mp3"):
+            os.rename(file, "song.mp3")
+
+@client.command()
+async def saved(ctx):
+    voice = discord.utils.get(client.voice_clients, guild = ctx.guild)
+
+    voice.play(discord.FFmpegPCMAudio('song.mp3'))
 
 client.run(token)
